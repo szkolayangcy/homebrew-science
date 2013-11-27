@@ -61,9 +61,29 @@ class Opencv < Formula
       system "make install"
     end
   end
-
+  
+  def patches
+    DATA
+  end
 
   def caveats
     python.standard_caveats if python
   end
 end
+diff -rBNu a/modules/highgui/src/cap_qtkit.mm b/modules/highgui/src/cap_qtkit.mm
+--- a/modules/highgui/src/cap_qtkit.mm
++++ b/modules/highgui/src/cap_qtkit.mm
+@@ -277,8 +277,11 @@ - (IplImage*)getOutput;
+
+     double sleepTime = 0.005;
+     double total = 0;
+
+-    while (![capture updateImage] && (total += sleepTime)<=timeOut)
+-        usleep((int)(sleepTime*1000));
++    NSDate *loopUntil = [NSDate dateWithTimeIntervalSinceNow:sleepTime];
++    while (![capture updateImage] && (total += sleepTime)<=timeOut &&
++           [[NSRunLoop currentRunLoop] runMode: NSDefaultRunLoopMode
++                                    beforeDate:loopUntil])
++        loopUntil = [NSDate dateWithTimeIntervalSinceNow:sleepTime];
+
+     [localpool drain];
